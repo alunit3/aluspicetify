@@ -1,0 +1,195 @@
+name: All-In-One Build
+
+on:
+  push:
+    branches:
+      - "main"
+      - "*/main/*/**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "main"
+      - "*/main/*/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Build & test on every commit / PR.
+  # -------------------------------------------------------------------------
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./src/apply/ -v
+
+      - name: Format check
+        run: |
+          gofmt -s -l .
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+
+      - name: Build (Linux amd64 smoke)
+        run: |
+          go build -ldflags "-X main.version=${{ github.sha }}" -o ./spicetify .
+          chmod +x ./spicetify
+          ./spicetify --version
+
+      - name: Verify bundled assets
+        run: |
+          test -f CustomApps/marketplace/index.js && echo "Marketplace OK"
+          test -f CustomApps/marketplace/extension.js && echo "Marketplace extension OK"
+          test -f CustomApps/marketplace/manifest.json && echo "Marketplace manifest OK"
+          test -f CustomApps/marketplace/style.css && echo "Marketplace CSS OK"
+          test -f Extensions/adblock.js && echo "adblock OK"
+          test -f Extensions/phraseToPlaylist.js && echo "phraseToPlaylist OK"
+          test -f Extensions/songstats.js && echo "songstats OK"
+          test -f Extensions/wikify.js && echo "wikify OK"
+          test -f Extensions/writeify.js && echo "writeify OK"
+          test -f Extensions/formatColors.js && echo "formatColors OK"
+          test -f Extensions/featureshuffle.js && echo "featureshuffle OK"
+          test -f Extensions/oldSidebar.js && echo "oldSidebar OK"
+
+      - name: Upload binary artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: spicetify-allinone-linux-amd64-dev
+          path: |
+            ./spicetify
+            ./CustomApps
+            ./Extensions
+            ./Themes
+            ./jsHelper
+            globals.d.ts
+            css-map.json
+
+  # -------------------------------------------------------------------------
+  # Cross-platform release builds — only on tag pushes (v*).
+  # -------------------------------------------------------------------------
+  release:
+    name: Release ${{ matrix.os }}-${{ matrix.arch }}
+    needs: build-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            runner: ubuntu-latest
+          - os: linux
+            arch: arm64
+            runner: ubuntu-latest
+          - os: darwin
+            arch: amd64
+            runner: macos-13
+          - os: darwin
+            arch: arm64
+            runner: macos-latest
+          - os: windows
+            arch: amd64
+            runner: windows-latest
+          - os: windows
+            arch: arm64
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Get Tag
+        shell: bash
+        run: echo "TAG=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+
+      - name: Build
+        shell: bash
+        run: |
+          go build -ldflags "-X main.version=v${{ env.TAG }}" -o "./spicetify${{ matrix.os == 'windows' && '.exe' || '' }}" .
+          chmod +x "./spicetify${{ matrix.os == 'windows' && '.exe' || '' }}" || true
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+
+      - name: Verify binary
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            ./spicetify.exe --version
+          else
+            ./spicetify --version
+          fi
+
+      - name: Set archive name
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            ARCH_NAME="${{ matrix.arch == 'amd64' && 'x64' || matrix.arch == 'arm64' && 'arm64' || 'x32' }}"
+            EXT="zip"
+          else
+            ARCH_NAME="${{ matrix.arch }}"
+            EXT="tar.gz"
+          fi
+          echo "ARCH_NAME=$ARCH_NAME" >> $GITHUB_ENV
+          echo "EXT=$EXT" >> $GITHUB_ENV
+          echo "ARCHIVE=spicetify-${{ env.TAG }}-${{ matrix.os }}-$ARCH_NAME.$EXT" >> $GITHUB_ENV
+
+      - name: Archive (Unix)
+        if: matrix.os != 'windows'
+        shell: bash
+        run: |
+          tar czf "${{ env.ARCHIVE }}" \
+            ./spicetify \
+            ./CustomApps \
+            ./Extensions \
+            ./Themes \
+            ./jsHelper \
+            globals.d.ts \
+            css-map.json
+
+      - name: Archive (Windows)
+        if: matrix.os == 'windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Force -DestinationPath "${{ env.ARCHIVE }}" -Path `
+            ".\spicetify.exe", `
+            ".\CustomApps", `
+            ".\Extensions", `
+            ".\Themes", `
+            ".\jsHelper", `
+            "globals.d.ts", `
+            "css-map.json"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v3
+        with:
+          files: ${{ env.ARCHIVE }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
