@@ -1,0 +1,138 @@
+diff --git a/manifest.json b/manifest.json
+index 9b6276d..cf5e881 100644
+--- a/manifest.json
++++ b/manifest.json
+@@ -40,5 +40,65 @@
+ 		"description": "Throw songs/artists to trash bin and never hear them again (automatically skip). This extension will append a Throw to Trashbin option in tracks and artists link right click menu.",
+ 		"preview": "https://i.imgur.com/ZFTy5Rm.png",
+ 		"main": "Extensions/trashbin.js"
++	},
++	{
++		"name": "adblockify",
++		"description": "Stream Spotify music without interruptions - Block ads instantly, with ease. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/adblock.js",
++		"authors": [{ "name": "ririxi", "url": "https://github.com/rxri" }],
++		"tags": ["ads", "block", "remove", "disable"]
++	},
++	{
++		"name": "Phrase to Playlist",
++		"description": "Convert a phrase into a playlist with songs arranged to make that phrase. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/phraseToPlaylist.js",
++		"authors": [
++			{ "name": "ririxi", "url": "https://github.com/rxri" },
++			{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" },
++			{ "name": "MalTeeez", "url": "https://github.com/MalTeeez" }
++		]
++	},
++	{
++		"name": "Song Stats",
++		"description": "Display a song's audio features. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/songstats.js",
++		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
++	},
++	{
++		"name": "WikiFy",
++		"description": "Shows an artist's Wikipedia page to learn more about them. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/wikify.js",
++		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
++	},
++	{
++		"name": "Writeify",
++		"description": "Take notes on songs, albums, and artists. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/writeify.js",
++		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
++	},
++	{
++		"name": "Format colors",
++		"description": "Convert the current colors defined in root to color.ini format, for theme developers. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/formatColors.js",
++		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
++	},
++	{
++		"name": "Feature Shuffle",
++		"description": "Make a playlist based on another playlist's audio features. Bundled natively in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/featureshuffle.js",
++		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
++	},
++	{
++		"name": "Old Sidebar",
++		"description": "Revert to the old sidebar layout. Bundled natively (not enabled by default) in this all-in-one fork.",
++		"preview": null,
++		"main": "Extensions/oldSidebar.js"
+ 	}
+ ]
+diff --git a/src/cmd/apply.go b/src/cmd/apply.go
+index ba833e7..2e2a548 100644
+--- a/src/cmd/apply.go
++++ b/src/cmd/apply.go
+@@ -69,6 +69,14 @@ func Apply(spicetifyVersion string) {
+ 	extensionList := featureSection.Key("extensions").Strings("|")
+ 	customAppsList := featureSection.Key("custom_apps").Strings("|")
+ 
++	// Merge natively bundled extensions and custom apps so this
++	// all-in-one fork loads the Marketplace and rxri extensions
++	// out-of-the-box, even when the user's config is empty or has
++	// been explicitly cleared. User entries are preserved and
++	// prioritized; duplicates are removed.
++	extensionList = apply.MergeBundled(extensionList, apply.BundledExtensions)
++	customAppsList = apply.MergeBundled(customAppsList, apply.BundledCustomApps)
++
+ 	spinner, _ := utils.Spinner.Start("Applying additional modifications")
+ 	apply.AdditionalOptions(appDestPath, apply.Flag{
+ 		CurrentTheme:         settingSection.Key("current_theme").MustString(""),
+diff --git a/src/cmd/watch.go b/src/cmd/watch.go
+index 098c216..be90d0b 100644
+--- a/src/cmd/watch.go
++++ b/src/cmd/watch.go
+@@ -7,6 +7,7 @@ import (
+ 	"sync"
+ 	"time"
+ 
++	"github.com/spicetify/cli/src/apply"
+ 	spotifystatus "github.com/spicetify/cli/src/status/spotify"
+ 	"github.com/spicetify/cli/src/utils"
+ )
+@@ -115,7 +116,9 @@ func WatchExtensions(extName []string, liveUpdate bool) {
+ 	if len(extName) > 0 {
+ 		extNameList = extName
+ 	} else {
+-		extNameList = featureSection.Key("extensions").Strings("|")
++		extNameList = apply.MergeBundled(
++			featureSection.Key("extensions").Strings("|"),
++			apply.BundledExtensions)
+ 	}
+ 
+ 	var extPathList []string
+@@ -160,7 +163,9 @@ func WatchCustomApp(appName []string, liveUpdate bool) {
+ 	if len(appName) > 0 {
+ 		appNameList = appName
+ 	} else {
+-		appNameList = featureSection.Key("custom_apps").Strings("|")
++		appNameList = apply.MergeBundled(
++			featureSection.Key("custom_apps").Strings("|"),
++			apply.BundledCustomApps)
+ 	}
+ 
+ 	threadCount := 0
+diff --git a/src/utils/config.go b/src/utils/config.go
+index b564a6a..06010db 100644
+--- a/src/utils/config.go
++++ b/src/utils/config.go
+@@ -33,8 +33,8 @@ var (
+ 			"expose_apis":        "1",
+ 		},
+ 		"AdditionalOptions": {
+-			"extensions":            "",
+-			"custom_apps":           "",
++			"extensions":            "adblock.js|phraseToPlaylist.js|songstats.js|wikify.js|writeify.js|formatColors.js|featureshuffle.js",
++			"custom_apps":           "marketplace",
+ 			"sidebar_config":        "0",
+ 			"home_config":           "1",
+ 			"experimental_features": "1",
