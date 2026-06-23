@@ -40,5 +40,65 @@
 		"description": "Throw songs/artists to trash bin and never hear them again (automatically skip). This extension will append a Throw to Trashbin option in tracks and artists link right click menu.",
 		"preview": "https://i.imgur.com/ZFTy5Rm.png",
 		"main": "Extensions/trashbin.js"
+	},
+	{
+		"name": "adblockify",
+		"description": "Stream Spotify music without interruptions - Block ads instantly, with ease. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/adblock.js",
+		"authors": [{ "name": "ririxi", "url": "https://github.com/rxri" }],
+		"tags": ["ads", "block", "remove", "disable"]
+	},
+	{
+		"name": "Phrase to Playlist",
+		"description": "Convert a phrase into a playlist with songs arranged to make that phrase. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/phraseToPlaylist.js",
+		"authors": [
+			{ "name": "ririxi", "url": "https://github.com/rxri" },
+			{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" },
+			{ "name": "MalTeeez", "url": "https://github.com/MalTeeez" }
+		]
+	},
+	{
+		"name": "Song Stats",
+		"description": "Display a song's audio features. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/songstats.js",
+		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
+	},
+	{
+		"name": "WikiFy",
+		"description": "Shows an artist's Wikipedia page to learn more about them. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/wikify.js",
+		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
+	},
+	{
+		"name": "Writeify",
+		"description": "Take notes on songs, albums, and artists. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/writeify.js",
+		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
+	},
+	{
+		"name": "Format colors",
+		"description": "Convert the current colors defined in root to color.ini format, for theme developers. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/formatColors.js",
+		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
+	},
+	{
+		"name": "Feature Shuffle",
+		"description": "Make a playlist based on another playlist's audio features. Bundled natively in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/featureshuffle.js",
+		"authors": [{ "name": "CharlieS1103", "url": "https://github.com/CharlieS1103" }]
+	},
+	{
+		"name": "Old Sidebar",
+		"description": "Revert to the old sidebar layout. Bundled natively (not enabled by default) in this all-in-one fork.",
+		"preview": null,
+		"main": "Extensions/oldSidebar.js"
 	}
 ]

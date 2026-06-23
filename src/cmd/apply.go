@@ -69,6 +69,14 @@ func Apply(spicetifyVersion string) {
 	extensionList := featureSection.Key("extensions").Strings("|")
 	customAppsList := featureSection.Key("custom_apps").Strings("|")
 
+	// Merge natively bundled extensions and custom apps so this
+	// all-in-one fork loads the Marketplace and rxri extensions
+	// out-of-the-box, even when the user's config is empty or has
+	// been explicitly cleared. User entries are preserved and
+	// prioritized; duplicates are removed.
+	extensionList = apply.MergeBundled(extensionList, apply.BundledExtensions)
+	customAppsList = apply.MergeBundled(customAppsList, apply.BundledCustomApps)
+
 	spinner, _ := utils.Spinner.Start("Applying additional modifications")
 	apply.AdditionalOptions(appDestPath, apply.Flag{
 		CurrentTheme:         settingSection.Key("current_theme").MustString(""),

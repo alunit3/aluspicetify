@@ -33,8 +33,8 @@ var (
 			"expose_apis":        "1",
 		},
 		"AdditionalOptions": {
-			"extensions":            "",
-			"custom_apps":           "",
+			"extensions":            "adblock.js|phraseToPlaylist.js|songstats.js|wikify.js|writeify.js|formatColors.js|featureshuffle.js",
+			"custom_apps":           "marketplace",
 			"sidebar_config":        "0",
 			"home_config":           "1",
 			"experimental_features": "1",

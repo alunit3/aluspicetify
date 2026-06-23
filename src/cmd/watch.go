@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spicetify/cli/src/apply"
 	spotifystatus "github.com/spicetify/cli/src/status/spotify"
 	"github.com/spicetify/cli/src/utils"
 )
@@ -115,7 +116,9 @@ func WatchExtensions(extName []string, liveUpdate bool) {
 	if len(extName) > 0 {
 		extNameList = extName
 	} else {
-		extNameList = featureSection.Key("extensions").Strings("|")
+		extNameList = apply.MergeBundled(
+			featureSection.Key("extensions").Strings("|"),
+			apply.BundledExtensions)
 	}
 
 	var extPathList []string
@@ -160,7 +163,9 @@ func WatchCustomApp(appName []string, liveUpdate bool) {
 	if len(appName) > 0 {
 		appNameList = appName
 	} else {
-		appNameList = featureSection.Key("custom_apps").Strings("|")
+		appNameList = apply.MergeBundled(
+			featureSection.Key("custom_apps").Strings("|"),
+			apply.BundledCustomApps)
 	}
 
 	threadCount := 0
