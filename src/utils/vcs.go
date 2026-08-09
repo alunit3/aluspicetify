@@ -12,8 +12,14 @@ type GithubRelease struct {
 	Message string `json:"message"`
 }
 
+// LatestReleaseRepo is the GitHub repo whose releases are checked
+// against for update notifications and self-update. This fork ships
+// its own release cadence (versions like "2.44.0-aio.1"), so it must
+// track its own repo rather than upstream spicetify/cli.
+const LatestReleaseRepo = "alunit3/aluspicetify"
+
 func FetchLatestTag() (string, error) {
-	res, err := http.Get("https://api.github.com/repos/spicetify/cli/releases/latest")
+	res, err := http.Get("https://api.github.com/repos/" + LatestReleaseRepo + "/releases/latest")
 	if err != nil {
 		return "", err
 	}

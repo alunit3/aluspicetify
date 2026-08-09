@@ -49,7 +49,7 @@ function Move-OldFolder {
 function Get-LatestRelease {
     Write-Host "    Fetching latest release..." -NoNewline
     $release = Invoke-RestMethod -Uri $RepoApi
-    $tag = $release.tag_name -replace 'v', ''
+    $tag = $release.tag_name -replace '^v', ''
     $assets = $release.assets
     $arch = Get-Architecture
     $pattern = "windows-$arch.zip"
@@ -132,6 +132,17 @@ Write-Host ""
 & $exe backup apply 2>&1 | ForEach-Object { Write-Host "    $_" }
 $applyExit = $LASTEXITCODE
 
+if ($applyExit -ne 0) {
+    # A leftover backup from a previous spicetify/AIO install commonly
+    # causes "backup apply" to refuse with "restore first then backup".
+    # Retry automatically via "restore backup apply" before giving up.
+    Write-Host ""
+    Write-Host "    Existing backup detected, retrying: spicetify restore backup apply" -ForegroundColor DarkGray
+    Write-Host ""
+    & $exe restore backup apply 2>&1 | ForEach-Object { Write-Host "    $_" }
+    $applyExit = $LASTEXITCODE
+}
+
 Write-Host ""
 if ($applyExit -eq 0) {
     Write-Host "  Installation complete!" -ForegroundColor Green
@@ -139,7 +150,7 @@ if ($applyExit -eq 0) {
 } else {
     Write-Host "  Spicetify installed, but apply failed (exit $applyExit)." -ForegroundColor Yellow
     Write-Host "  Make sure Spotify is installed, then run:" -ForegroundColor Yellow
-    Write-Host "    spicetify backup apply" -ForegroundColor White
+    Write-Host "    spicetify restore backup apply" -ForegroundColor White
 }
 Write-Host ""
 Write-Host "  Open a NEW terminal to use 'spicetify' command." -ForegroundColor DarkGray

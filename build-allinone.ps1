@@ -132,7 +132,8 @@ if (-not $SkipBuildAssets) {
 # ---------------------------------------------------------------------------
 Write-Step "Compiling CLI binary"
 $out = Join-Path $RepoRoot $OutputName
-go build -ldflags "-X main.version=$Version" -o $out .
+$VersionNumber = $Version -replace '^v', ''
+go build -ldflags "-X main.version=$VersionNumber" -o $out .
 if ($LASTEXITCODE -ne 0) { Write-Err "go build failed" }
 Write-Ok "binary: $out ($((Get-Item $out).Length) bytes)"
 

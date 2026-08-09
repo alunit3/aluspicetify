@@ -128,7 +128,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          go build -ldflags "-X main.version=v${{ env.TAG }}" -o "./spicetify${{ matrix.os == 'windows' && '.exe' || '' }}" .
+          go build -ldflags "-X main.version=${{ env.TAG }}" -o "./spicetify${{ matrix.os == 'windows' && '.exe' || '' }}" .
           chmod +x "./spicetify${{ matrix.os == 'windows' && '.exe' || '' }}" || true
         env:
           GOOS: ${{ matrix.os }}

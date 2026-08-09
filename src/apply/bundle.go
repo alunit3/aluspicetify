@@ -23,7 +23,6 @@ var BundledExtensions = []string{
 	"songstats.js",
 	"wikify.js",
 	"writeify.js",
-	"formatColors.js",
 	"featureshuffle.js",
 }
 

@@ -97,7 +97,8 @@ fi
 # --- 4. Compile the customized Go CLI binary ---------------------------------
 step "Compiling CLI binary"
 OUT="$REPO_ROOT/$OUTPUT_NAME"
-go build -ldflags "-X main.version=$VERSION" -o "$OUT" . || err "go build failed"
+VERSION_NUMBER="${VERSION#v}"
+go build -ldflags "-X main.version=$VERSION_NUMBER" -o "$OUT" . || err "go build failed"
 ok "binary: $OUT ($(wc -c < "$OUT" | tr -d ' ') bytes)"
 
 step "All-in-one build complete"
