@@ -6,11 +6,11 @@ import (
 
 func TestMergeBundled(t *testing.T) {
 	cases := []struct {
-		name        string
-		userItems   []string
+		name         string
+		userItems    []string
 		bundledItems []string
-		disableEnv  string
-		want        []string
+		disableEnv   string
+		want         []string
 	}{
 		{
 			name:         "empty user adds all bundled",
