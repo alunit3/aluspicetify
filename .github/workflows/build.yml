@@ -21,6 +21,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate wrapper build
+        run: pnpm check:wrapper
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
@@ -47,6 +62,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v2')
     needs: build
+    env:
+      SIGNPATH_ENABLED: ${{ secrets.SIGNPATH_API_TOKEN != '' && secrets.SIGNPATH_ORG_ID != '' }}
 
     steps:
       - name: Checkout
@@ -54,6 +71,21 @@ jobs:
 
       - name: Get Tag
         run: echo "TAG=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build wrapper bundle
+        run: pnpm build:wrapper
 
       - name: Is Unix Platform
         run: echo "IS_UNIX=${{ matrix.os != 'windows' && matrix.arch != '386' && (matrix.os != 'linux' || matrix.arch != 'arm64') }}" >> $GITHUB_ENV
@@ -77,7 +109,7 @@ jobs:
           CGO_ENABLED: 0
 
       - name: Upload Artifact for Signing
-        if: env.IS_WIN == 'true'
+        if: env.IS_WIN == 'true' && env.SIGNPATH_ENABLED == 'true'
         id: upload-artifact-for-signing
         uses: actions/upload-artifact@v7
         with:
@@ -85,7 +117,7 @@ jobs:
           path: ./spicetify.exe
 
       - name: Sign Windows Executable
-        if: env.IS_WIN == 'true'
+        if: env.IS_WIN == 'true' && env.SIGNPATH_ENABLED == 'true'
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -97,7 +129,7 @@ jobs:
           output-artifact-directory: "./signed"
 
       - name: Copy Signed Windows Executable
-        if: env.IS_WIN == 'true'
+        if: env.IS_WIN == 'true' && env.SIGNPATH_ENABLED == 'true'
         run: |
           cp ./signed/spicetify.exe ./spicetify.exe
 
