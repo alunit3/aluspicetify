@@ -17,3 +17,8 @@ jsHelper/spicetifyWrapper.js.map
 
 # Logs
 install.log
+
+# Local Claude Code / graphify tooling
+graphify-out/
+CLAUDE.md
+.claude/
