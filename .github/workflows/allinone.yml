@@ -136,6 +136,10 @@ jobs:
           CGO_ENABLED: 0
 
       - name: Verify binary
+        # Skip for cross-compiled targets that don't match the build host's
+        # native architecture (e.g. linux/arm64 on ubuntu-latest amd64,
+        # windows/arm64 on windows-latest amd64) — the binary can't execute there.
+        if: matrix.arch == 'amd64' || matrix.os == 'darwin'
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows" ]; then
