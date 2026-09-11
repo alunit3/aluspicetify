@@ -99,9 +99,6 @@ jobs:
             arch: arm64
             runner: ubuntu-latest
           - os: darwin
-            arch: amd64
-            runner: macos-13
-          - os: darwin
             arch: arm64
             runner: macos-latest
           - os: windows
@@ -139,6 +136,7 @@ jobs:
         # Skip for cross-compiled targets that don't match the build host's
         # native architecture (e.g. linux/arm64 on ubuntu-latest amd64,
         # windows/arm64 on windows-latest amd64) — the binary can't execute there.
+        # darwin-arm64 runs natively on macos-latest, so it is verified too.
         if: matrix.arch == 'amd64' || matrix.os == 'darwin'
         shell: bash
         run: |

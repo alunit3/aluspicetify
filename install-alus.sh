@@ -38,7 +38,7 @@ ok "curl and tar available"
 
 # --- Detect platform --------------------------------------------------------
 case $(uname -sm) in
-    "Darwin x86_64")  TARGET="darwin-amd64" ;;
+    "Darwin x86_64")  err "Intel (x86_64) Macs are no longer supported. Prebuilt darwin-amd64 binaries are not published; Apple Silicon (arm64) is required, or build from source." ;;
     "Darwin arm64")   TARGET="darwin-arm64" ;;
     "Linux x86_64")   TARGET="linux-amd64" ;;
     "Linux aarch64")  TARGET="linux-arm64" ;;
